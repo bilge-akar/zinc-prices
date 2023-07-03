@@ -21,16 +21,16 @@ df = pd.read_excel(path)
 
 df.rename(columns={'date': 'Date', 'LME_Zinc_Cash_Settlement': 'Zinc'}, inplace=True)
 
-x = df['Date'].astype(str)
-y = pd.to_numeric(df['Zinc'], errors='coerce')
+df_sorted = df.sort_values(by='Date', ascending=True)
 
-plt.plot(x[:-1], y)
+x = df_sorted['Date'].astype(str)
+y = pd.to_numeric(df_sorted['Zinc'], errors='coerce')
 
-plt.xticks(rotation=90)  # Rotate x-axis tick labels by 90 degrees
+plt.plot(x[::-1], y)
 
-# Reduce the number of ticks to avoid overcrowding
-num_ticks = 10  # Specify the desired number of ticks
-step = len(x) // num_ticks  # Determine the step size
+plt.xticks(rotation=90)  
+num_ticks = 10  
+step = len(x) // num_ticks  
 plt.xticks(range(0, len(x), step), x[::step])
 
 plt.xlabel('Date')
