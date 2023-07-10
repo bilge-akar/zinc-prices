@@ -6,6 +6,18 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt   # data visualization
 import seaborn as sns             # statistical data visualization
 
+from datetime import datetime
+import numpy as np             #for numerical computations like log,exp,sqrt etc
+import pandas as pd            #for reading & storing data, pre-processing
+import matplotlib.pylab as plt #for visualization
+            
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import acf, pacf
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.arima_model import ARIMA
+from matplotlib.pylab import rcParams
+rcParams['figure.figsize'] = 10, 6
+
 file = 'zinc.csv.xlsx'
 
 # Reading the data from excel and plotting a zinc price-time graph
@@ -134,3 +146,79 @@ plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 plt.show()
 
+
+
+
+
+
+#ARIMA
+"""
+#ACF & PACF plots
+
+lag_acf = acf(df_log_diff, nlags=20)
+lag_pacf = pacf(df_log_diff, nlags=20, method='ols')
+
+#Plot ACF:
+plt.subplot(121)
+plt.plot(lag_acf)
+plt.axhline(y=0, linestyle='--', color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.title('Autocorrelation Function')            
+
+#Plot PACF
+plt.subplot(122)
+plt.plot(lag_pacf)
+plt.axhline(y=0, linestyle='--', color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.title('Partial Autocorrelation Function')
+            
+plt.tight_layout()
+
+plt.show()
+"""
+
+from statsmodels.tsa.stattools import acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+# Draw Plot
+fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
+plot_acf(df['Zinc'].tolist(), lags=50, ax=axes[0])
+plot_pacf(df['Zinc'].tolist(), lags=50, ax=axes[1])
+
+# Draw Plot
+fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
+plot_acf(df_log['Zinc'].tolist(), lags=50, ax=axes[0])
+plot_pacf(df_log['Zinc'].tolist(), lags=50, ax=axes[1])
+
+# Draw Plot
+fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
+plot_acf(df_log_diff['Zinc'].tolist(), lags=50, ax=axes[0])
+plot_pacf(df_log_diff['Zinc'].tolist(), lags=50, ax=axes[1])
+
+plt.show()
+
+from pandas.plotting import lag_plot
+plt.rcParams.update({'ytick.left' : False, 'axes.titlepad':10})
+
+# Plot
+fig, axes = plt.subplots(1, 4, figsize=(10,3), sharex=True, sharey=True, dpi=100)
+for i, ax in enumerate(axes.flatten()[:4]):
+    lag_plot(df['Zinc'], lag=i+1, ax=ax, c='firebrick')
+    ax.set_title('Lag ' + str(i+1))
+
+fig.suptitle('Lag Plots of Zinc Prices', y=1.05)    
+plt.show()
+
+'''
+from statsmodels.tsa.arima_model import ARIMA
+
+plt.figure(figsize=(20,10))
+model=ARIMA(df_log_diff, order=(2,1,2))
+results=model.fit(disp=-1)
+plt.plot(data_shift) ????????????????
+plt.plot(results.fittedvalues, color='red')
+plt.title('RSS: %.4f'% sum((results.fittedvalues-data_shift['Passengers'])**2))
+print('plotting ARIMA model')
+'''
