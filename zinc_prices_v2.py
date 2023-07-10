@@ -31,7 +31,7 @@ df.shape
 df.rename(columns={'date': 'Date', 'LME_Zinc_Cash_Settlement': 'Zinc'}, inplace=True)
 
 x = df['Date'].astype(str)
-y = pd.to_numeric(df['Zinc'], errors='coerce')
+y = pd.to_numeric(df['Zinc'], errors='coerce') 
 
 plt.plot(x, y)
 
