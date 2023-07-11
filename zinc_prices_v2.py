@@ -16,6 +16,7 @@ from statsmodels.tsa.stattools import acf, pacf
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.arima_model import ARIMA
 from matplotlib.pylab import rcParams
+
 rcParams['figure.figsize'] = 10, 6
 
 file = 'zinc.csv.xlsx'
@@ -178,47 +179,74 @@ plt.tight_layout()
 
 plt.show()
 """
-
-from statsmodels.tsa.stattools import acf, pacf
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-
-# Draw Plot
-fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
-plot_acf(df['Zinc'].tolist(), lags=50, ax=axes[0])
-plot_pacf(df['Zinc'].tolist(), lags=50, ax=axes[1])
-
-# Draw Plot
-fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
-plot_acf(df_log['Zinc'].tolist(), lags=50, ax=axes[0])
-plot_pacf(df_log['Zinc'].tolist(), lags=50, ax=axes[1])
-
-# Draw Plot
-fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100)
-plot_acf(df_log_diff['Zinc'].tolist(), lags=50, ax=axes[0])
-plot_pacf(df_log_diff['Zinc'].tolist(), lags=50, ax=axes[1])
-
-plt.show()
-
-from pandas.plotting import lag_plot
-plt.rcParams.update({'ytick.left' : False, 'axes.titlepad':10})
-
-# Plot
-fig, axes = plt.subplots(1, 4, figsize=(10,3), sharex=True, sharey=True, dpi=100)
-for i, ax in enumerate(axes.flatten()[:4]):
-    lag_plot(df['Zinc'], lag=i+1, ax=ax, c='firebrick')
-    ax.set_title('Lag ' + str(i+1))
-
-fig.suptitle('Lag Plots of Zinc Prices', y=1.05)    
-plt.show()
-
 '''
-from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.arima.model import ARIMA
 
-plt.figure(figsize=(20,10))
-model=ARIMA(df_log_diff, order=(2,1,2))
-results=model.fit(disp=-1)
-plt.plot(data_shift) ????????????????
+model_ARIMA = ARIMA(df_log_diff['Zinc'],order=(2,1,3))
+
+model_Arima_fit = model_ARIMA.fit()
+
+pred_start_date=test_data.index[0]
+pred_end_date=test_data.index[-1]
+print(pred_start_date)
+print(pred_end_date)
+
+pred=model_Arima_fit.predict(start=pred_start_date,end=pred_end_date)
+residuals=test_data['Thousands of Passengers']-pred
+
+model_Arima_fit.resid.plot()
+
+test_data['Predicted_ARIMA']=pred
+
+test_data[['Thousands of Passengers','Predicted_ARIMA']].plot()
+
+from pandas.tseries.offsets import DateOffset
+future_dates=[df_airline.index[-1]+ DateOffset(months=x)for x in range(0,25)]
+'''
+
+from statsmodels.tsa.arima.model import ARIMA
+
+df_shift = df_log_diff - df_log_diff.shift()
+
+model = ARIMA(df_log_diff['Zinc'], order=(2, 1, 3))
+results = model.fit()
+
+plt.figure(figsize=(20, 10))
+plt.plot(df_shift)
 plt.plot(results.fittedvalues, color='red')
-plt.title('RSS: %.4f'% sum((results.fittedvalues-data_shift['Passengers'])**2))
-print('plotting ARIMA model')
-'''
+plt.title('RSS: %.4f' % sum((results.fittedvalues - df_shift['Zinc'])**2))
+plt.show()
+
+predictions = pd.Series(results.fittedvalues, copy=True)
+predictions_cum_sum = predictions.cumsum()
+predictions_log = pd.Series(df_log_diff['Zinc'].iloc[0], index=df_log_diff.index)
+predictions_log = predictions_log.add(predictions_cum_sum, fill_value=0)
+predictions_ARIMA = np.exp(predictions_log)
+
+plt.figure(figsize=(20, 10))
+plt.plot(df['Zinc'])
+plt.plot(predictions_ARIMA)
+plt.show()
+
+last_date = pd.Timestamp(df_log_diff.index[-1])
+
+forecast_steps = 120
+forecast = results.get_forecast(steps=forecast_steps)
+
+forecast_dates = pd.date_range(start=last_date + pd.DateOffset(days=1), periods=forecast_steps, freq='D')
+
+forecast_values = np.exp(forecast.predicted_mean)
+
+# Plot the forecasted values
+plt.figure(figsize=(20, 10))
+plt.plot(df['Zinc'], label='Actual')
+plt.plot(forecast_values, color='red', label='Forecast')
+plt.xlabel('Date')
+plt.ylabel('Zinc')
+plt.title('Zinc Prices - Actual vs. Forecast')
+plt.legend()
+plt.show()
+
+# Print the forecasted values
+print("Forecasted Values:")
+print(forecast_values)
