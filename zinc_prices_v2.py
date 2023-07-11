@@ -153,94 +153,54 @@ plt.show()
 
 
 #ARIMA
-"""
-#ACF & PACF plots
 
-lag_acf = acf(df_log_diff, nlags=20)
-lag_pacf = pacf(df_log_diff, nlags=20, method='ols')
-
-#Plot ACF:
-plt.subplot(121)
-plt.plot(lag_acf)
-plt.axhline(y=0, linestyle='--', color='gray')
-plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
-plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
-plt.title('Autocorrelation Function')            
-
-#Plot PACF
-plt.subplot(122)
-plt.plot(lag_pacf)
-plt.axhline(y=0, linestyle='--', color='gray')
-plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
-plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
-plt.title('Partial Autocorrelation Function')
-            
-plt.tight_layout()
-
-plt.show()
-"""
-'''
-from statsmodels.tsa.arima.model import ARIMA
-
-model_ARIMA = ARIMA(df_log_diff['Zinc'],order=(2,1,3))
-
-model_Arima_fit = model_ARIMA.fit()
-
-pred_start_date=test_data.index[0]
-pred_end_date=test_data.index[-1]
-print(pred_start_date)
-print(pred_end_date)
-
-pred=model_Arima_fit.predict(start=pred_start_date,end=pred_end_date)
-residuals=test_data['Thousands of Passengers']-pred
-
-model_Arima_fit.resid.plot()
-
-test_data['Predicted_ARIMA']=pred
-
-test_data[['Thousands of Passengers','Predicted_ARIMA']].plot()
-
-from pandas.tseries.offsets import DateOffset
-future_dates=[df_airline.index[-1]+ DateOffset(months=x)for x in range(0,25)]
-'''
 
 from statsmodels.tsa.arima.model import ARIMA
-
-df_shift = df_log_diff - df_log_diff.shift()
 
 model = ARIMA(df_log_diff['Zinc'], order=(2, 1, 3))
 results = model.fit()
 
 plt.figure(figsize=(20, 10))
-plt.plot(df_shift)
+plt.plot(df_log_diff)
 plt.plot(results.fittedvalues, color='red')
-plt.title('RSS: %.4f' % sum((results.fittedvalues - df_shift['Zinc'])**2))
+plt.title('RSS')
 plt.show()
 
 predictions = pd.Series(results.fittedvalues, copy=True)
-predictions_cum_sum = predictions.cumsum()
-predictions_log = pd.Series(df_log_diff['Zinc'].iloc[0], index=df_log_diff.index)
-predictions_log = predictions_log.add(predictions_cum_sum, fill_value=0)
-predictions_ARIMA = np.exp(predictions_log)
 
+predictions_log = pd.Series(df_log_diff['Zinc'].iloc[0], index=df_log_diff.index)
+
+predictions_cum_sum = predictions.cumsum()
+predictions_log_added = predictions_log.add(predictions_cum_sum, fill_value=0)
+predictions_ARIMA = np.exp(predictions_log_added)
+
+# Plot the transformed series
 plt.figure(figsize=(20, 10))
 plt.plot(df['Zinc'])
 plt.plot(predictions_ARIMA)
+plt.xlabel('Time')
+plt.ylabel('Zinc')
+plt.title('Actual vs. Predicted')
+plt.legend(['Actual', 'Predicted'])
 plt.show()
 
-last_date = pd.Timestamp(df_log_diff.index[-1])
+last_day = df.index[-1]
 
-forecast_steps = 120
+forecast_steps = 365
 forecast = results.get_forecast(steps=forecast_steps)
 
-forecast_dates = pd.date_range(start=last_date + pd.DateOffset(days=1), periods=forecast_steps, freq='D')
+forecast_days = np.arange(last_day + 1, last_day + forecast_steps + 1)
 
 forecast_values = np.exp(forecast.predicted_mean)
+
+forecast_diff = pd.Series(forecast_values, index=forecast_days)
+forecast_log_added = pd.Series(df_log['Zinc'].iloc[-1], index=forecast_days).add(forecast_diff.cumsum(), fill_value=0)
+forecast_ARIMA = np.exp(forecast_log_added)
 
 # Plot the forecasted values
 plt.figure(figsize=(20, 10))
 plt.plot(df['Zinc'], label='Actual')
-plt.plot(forecast_values, color='red', label='Forecast')
+plt.plot(forecast_ARIMA, color='red', label='Forecast')
 plt.xlabel('Date')
 plt.ylabel('Zinc')
 plt.title('Zinc Prices - Actual vs. Forecast')
@@ -249,4 +209,4 @@ plt.show()
 
 # Print the forecasted values
 print("Forecasted Values:")
-print(forecast_values)
+print(forecast_ARIMA)

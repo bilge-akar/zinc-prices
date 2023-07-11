@@ -167,3 +167,54 @@ for i, ax in enumerate(axes.flatten()[:4]):
 
 fig.suptitle('Lag Plots of Zinc Prices', y=1.05)
 plt.show()
+
+"""
+#ACF & PACF plots
+
+lag_acf = acf(df_log_diff, nlags=20)
+lag_pacf = pacf(df_log_diff, nlags=20, method='ols')
+
+#Plot ACF:
+plt.subplot(121)
+plt.plot(lag_acf)
+plt.axhline(y=0, linestyle='--', color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.title('Autocorrelation Function')            
+
+#Plot PACF
+plt.subplot(122)
+plt.plot(lag_pacf)
+plt.axhline(y=0, linestyle='--', color='gray')
+plt.axhline(y=-1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.axhline(y=1.96/np.sqrt(len(df_log_diff)), linestyle='--', color='gray')
+plt.title('Partial Autocorrelation Function')
+            
+plt.tight_layout()
+
+plt.show()
+"""
+'''
+from statsmodels.tsa.arima.model import ARIMA
+
+model_ARIMA = ARIMA(df_log_diff['Zinc'],order=(2,1,3))
+
+model_Arima_fit = model_ARIMA.fit()
+
+pred_start_date=test_data.index[0]
+pred_end_date=test_data.index[-1]
+print(pred_start_date)
+print(pred_end_date)
+
+pred=model_Arima_fit.predict(start=pred_start_date,end=pred_end_date)
+residuals=test_data['Thousands of Passengers']-pred
+
+model_Arima_fit.resid.plot()
+
+test_data['Predicted_ARIMA']=pred
+
+test_data[['Thousands of Passengers','Predicted_ARIMA']].plot()
+
+from pandas.tseries.offsets import DateOffset
+future_dates=[df_airline.index[-1]+ DateOffset(months=x)for x in range(0,25)]
+'''
