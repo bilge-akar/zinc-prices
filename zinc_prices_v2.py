@@ -154,59 +154,50 @@ plt.show()
 
 #ARIMA
 
-
 from statsmodels.tsa.arima.model import ARIMA
 
-model = ARIMA(df_log_diff['Zinc'], order=(2, 1, 3))
+# Fit the ARIMA model
+model = ARIMA(df_log_diff, order=(2, 1, 3))
 results = model.fit()
 
-plt.figure(figsize=(20, 10))
+# Plot the fitted values
+plt.figure(figsize=(10, 6))
 plt.plot(df_log_diff)
 plt.plot(results.fittedvalues, color='red')
-plt.title('RSS')
+plt.title('Residuals')
 plt.show()
 
-predictions = pd.Series(results.fittedvalues, copy=True)
-
-predictions_log = pd.Series(df_log_diff['Zinc'].iloc[0], index=df_log_diff.index)
-
-predictions_cum_sum = predictions.cumsum()
+# Obtain the predicted values in the original scale
+predictions_log = pd.Series(df_log.iloc[0], index=df_log.index)
+predictions_cum_sum = results.fittedvalues.cumsum()
 predictions_log_added = predictions_log.add(predictions_cum_sum, fill_value=0)
 predictions_ARIMA = np.exp(predictions_log_added)
 
-# Plot the transformed series
-plt.figure(figsize=(20, 10))
-plt.plot(df['Zinc'])
-plt.plot(predictions_ARIMA)
-plt.xlabel('Time')
+# Plot the actual and predicted values
+plt.figure(figsize=(10, 6))
+plt.plot(df['Zinc'], label='Actual')
+plt.plot(predictions_ARIMA, color='red', label='Predicted')
+plt.xlabel('Index')
 plt.ylabel('Zinc')
 plt.title('Actual vs. Predicted')
-plt.legend(['Actual', 'Predicted'])
+plt.legend()
 plt.show()
 
-last_day = df.index[-1]
-
-forecast_steps = 365
+# Generate forecasted values
+forecast_steps = 120
 forecast = results.get_forecast(steps=forecast_steps)
-
-forecast_days = np.arange(last_day + 1, last_day + forecast_steps + 1)
-
 forecast_values = np.exp(forecast.predicted_mean)
 
-forecast_diff = pd.Series(forecast_values, index=forecast_days)
-forecast_log_added = pd.Series(df_log['Zinc'].iloc[-1], index=forecast_days).add(forecast_diff.cumsum(), fill_value=0)
-forecast_ARIMA = np.exp(forecast_log_added)
-
 # Plot the forecasted values
-plt.figure(figsize=(20, 10))
+plt.figure(figsize=(10, 6))
 plt.plot(df['Zinc'], label='Actual')
-plt.plot(forecast_ARIMA, color='red', label='Forecast')
-plt.xlabel('Date')
+plt.plot(np.arange(len(df['Zinc']), len(df['Zinc']) + forecast_steps), forecast_values, color='red', label='Forecast')
+plt.xlabel('Index')
 plt.ylabel('Zinc')
-plt.title('Zinc Prices - Actual vs. Forecast')
+plt.title('Actual vs. Forecast')
 plt.legend()
 plt.show()
 
 # Print the forecasted values
 print("Forecasted Values:")
-print(forecast_ARIMA)
+print(forecast_values)
