@@ -101,7 +101,7 @@ stationarity(df_log, 'Zinc')
 MAvg=df_log.rolling(window=12).mean()
 MStd=df_log.rolling(window=12).std()
 
-df_log_diff=df_log-MAvg
+df_log_diff=df_log.diff()
 
 df_log_diff=df_log_diff.dropna()
 
@@ -115,6 +115,22 @@ plt.legend()
 plt.show()
 
 stationarity(df_log_diff,'Zinc')
+
+
+df_diff=df.diff()
+
+df_diff=df_diff.dropna()
+
+# Plot the transformed series
+plt.figure(figsize=(10, 6))
+plt.plot(df_diff['Zinc'], color='blue', label='Transformed Series')
+plt.xlabel('Time')
+plt.ylabel('Zinc')
+plt.title('Diff Transformed Series')
+plt.legend()
+plt.show()
+
+stationarity(df_diff,'Zinc')
 
 
 # Test for seasonality
